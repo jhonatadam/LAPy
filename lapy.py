@@ -1,5 +1,6 @@
 from numpy import matrix, zeros, random, finfo, argmax, array
 
+# MATRIX MULTIPLICATION ________________________________________________________________________________________________
 
 def prod(A, B):
     if A.shape == B.shape:
@@ -56,86 +57,109 @@ def multblock(A, B, blocksize):
                 block += mult(getblock(A, l, k, blocksize), getblock(B, k, c, blocksize))
     return C
 
-def partial_pivoting(M, m, i):
+
+# PIVOTING _____________________________________________________________________________________________________________
+
+def partial_pivoting(M, N, i, row_order):
     if abs(M[i, i]) > finfo(float).eps:
         return
-    print "aqui"
-    n = M.shape[0]
-    max_idx = i
 
-    # procurando indice do maior
-    for k in xrange(i+1, n):
+    # buscando um elemento maior que M[i,i]
+    max_idx = i
+    for k in xrange(i+1, M.shape[0]):
         if abs(M[k, i]) > abs(M[max_idx, i]):
             max_idx = k
 
-    # realizar troca se houver alguem maior que o pivo
+    # trocando as linhas se existe um elemento maior
     if max_idx != i:
         M[[i, max_idx], :] = M[[max_idx, i], :]
-        m[[i, max_idx], :] = m[[max_idx, i], :]
+        N[[i, max_idx], :] = N[[max_idx, i], :]
+        if row_order != None:
+            row_order[[i, max_idx]] = row_order[[max_idx, i]]
 
-def total_pivoting(M, i, var_idx):
+
+def total_pivoting(M, N, i, col_order=None):
     if abs(M[i, i]) > finfo(float).eps:
         return
 
-    n = M.shape[0]
+    # procurando indice do maior elemento
     max_idx = (i, i)
-
-    # procurando indice do maior
-    for l in xrange(i, n):
-        for c in xrange(i+1, n):
+    for l in xrange(i, M.shape[0]):
+        for c in xrange(i+1, M.shape[1]):
             if abs(M[l, c]) > abs(M[max_idx[0], max_idx[1]]):
                 max_idx = (l, c)
-
-    if max_idx == (i, i):
-        raise Exception("PivotingError in function total_pivoring")
 
     # troca linhas se forem diferentes
     if max_idx[0] != i:
         M[[i, max_idx[0]], :] = M[[max_idx[0], i], :]
-    # troca colunas da matriz
-    M[:, [i, max_idx[1]]] = M[:, [max_idx[1], i]]
-    # atualiza ordem das variaveis
-    var_idx[[i, max_idx[1]]] = var_idx[[max_idx[1], i]]
+        N[[i, max_idx[0]], :] = N[[max_idx[0], i], :]
+
+    # troca colunas da matriz M
+    if max_idx[1] != i:
+        M[:, [i, max_idx[1]]] = M[:, [max_idx[1], i]]
+        # atualiza ordem das variaveis
+        if col_order != None:
+            col_order[[i, max_idx[1]]] = col_order[[max_idx[1], i]]
 
 
-# precisa adaptar para resolver o problema de encontrar a inversa de A
-def gauss(A, b):
+# MATRIX ELIMINATION ___________________________________________________________________________________________________
 
-    if A.shape[0] != A.shape[1] or A.shape[0] != b.shape[0] or b.shape[1] != 1:
-        raise Exception("MatrixShapeError in function gauss")
+# eliminacao de gauss
+def gauss(A, B = None, row_order=None, col_order=None):
 
+    if B != None:
+        if A.shape[0] != B.shape[0]:
+            raise Exception("MatrixShapeError in function gauss")
+
+    # n = numero de linhas de A
     n = A.shape[0]
+    # inicialmente copia de A
     C = A.copy()
-    d = b.copy()
-    var_idx = array(range(n))
+    # inicialmente copia de B, se B existir
+    D = B.copy() if B != None else None
 
     for c in xrange(n - 1):
-        partial_pivoting(C, d, c)
-        total_pivoting(C, c, var_idx)
+        partial_pivoting(C, D, c, row_order)
+        total_pivoting(C, D, c, col_order)
 
         for l in xrange((c+1), n):
             alpha = C[l, c] / C[c, c]
             C[l, c] = 0.
-            for k in xrange((c+1), n):
-                C[l, k] += -1 * alpha * C[c, k]
-            d[l] -= alpha * d[c]
 
-    return C, d, var_idx
+            for k in xrange((c+1), n):
+                C[l, k] -= alpha * C[c, k]
+
+            if B != None:
+                for k in xrange(D.shape[1]):
+                    D[l, k] -= alpha * D[c, k]
+
+    return (C, D) if B != None else C
+
+
+# LINEAR SISTEM SOLVER _________________________________________________________________________________________________
 
 # resolve sistemas lineares
 def solve_ls(A, b):
 
-    C, d, var_idex = gauss(A, b)
-    n = C.shape[0]
+    # numero de linhas
+    n = A.shape[0]
+    # guarda a ordem das colunas (variaveis)
+    col_order = array(range(A.shape[1]))
+    # aplicando eliminacao de gauss
+    C, d = gauss(A, b, col_order=col_order)
+    # guarda o valor das variaveis
     var_val = zeros(d.shape)
 
+    # replacement
     for l in reversed(range(n)):
         var_sum = 0.
         for c in range(l+1, n):
             var_sum += C[l, c] * var_val[c, 0]
         var_val[l, 0] = (d[l] - var_sum) / C[l, l]
 
-    var_idex = var_idex.tolist()
+    print mult(A, var_val)
+
+    var_idex = col_order.tolist()
     for i in xrange(n):
         index = var_idex.index(i)
         print "var_" + str(var_idex[index]) + " = " + str(var_val[index, 0])
