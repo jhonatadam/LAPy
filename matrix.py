@@ -15,3 +15,4 @@ class matrix:
     
 
     def __mul__(self, other):
+        pass
