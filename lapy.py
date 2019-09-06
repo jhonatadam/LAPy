@@ -113,25 +113,28 @@ def gauss(A, B = None, row_order=None, col_order=None):
 
     # n = numero de linhas de A
     n = A.shape[0]
+    # m = numero de colunas de A
+    m = A.shape[1]
     # inicialmente copia de A
     C = A.copy()
     # inicialmente copia de B, se B existir
     D = B.copy() if B != None else None
 
-    for c in xrange(n - 1):
+    for c in xrange(min(n - 1, m)):
         partial_pivoting(C, D, c, row_order)
         total_pivoting(C, D, c, col_order)
 
-        for l in xrange((c+1), n):
-            alpha = C[l, c] / C[c, c]
-            C[l, c] = 0.
+        if abs(C[c, c]) > finfo(float).eps:
+            for l in xrange((c+1), n):
+                alpha = C[l, c] / C[c, c]
+                C[l, c] = 0.
 
-            for k in xrange((c+1), n):
-                C[l, k] -= alpha * C[c, k]
+                for k in xrange((c+1), m):
+                    C[l, k] -= alpha * C[c, k]
 
-            if B != None:
-                for k in xrange(D.shape[1]):
-                    D[l, k] -= alpha * D[c, k]
+                if B != None:
+                    for k in xrange(D.shape[1]):
+                        D[l, k] -= alpha * D[c, k]
 
     return (C, D) if B != None else C
 
