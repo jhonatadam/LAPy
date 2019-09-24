@@ -238,7 +238,17 @@ def LU(A):
 
 # decomposicao cholesky (apenas para matrizes simetricas)
 def cholesky(A):
-    pass
+    if A.shape[0] != A.shape[1]:
+        raise Exception("MatrixShapeError in function LU")
+
+    S = zeros(A.shape)
+
+    for c in xrange(A.shape[1]):
+        S[c, c] = (A[c, c] - (S[c, :c] * S[c, :c]).sum())**(.5)
+        for l in xrange(c+1, A.shape[0]):
+            S[l, c] = (A[l, c] - (S[l, :c] * S[c, :c]).sum()) / S[c, c]
+
+    return S
 
 
 

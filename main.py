@@ -5,12 +5,13 @@ import sys
 A = 1. * lapy.random.randint(10, size=(4, 4))
 B = 1. * lapy.random.randint(5, size=(4, 1))
 
-# print lapy.mult(A, B)[0,0]
+A = lapy.mult(A, A.transpose())
 
-L, U = lapy.LU(A)
+print A
 
-print L
-print U
-print lapy.mult(L, U)
+S = lapy.cholesky(A)
+
+print S
+print lapy.mult(S, S.transpose())
 
 # print lapy.mult(A, lapy.inv(A))
