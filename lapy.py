@@ -1,4 +1,4 @@
-from numpy import matrix, zeros, random, finfo, argmax, array, identity
+from numpy import matrix, zeros, random, finfo, argmax, array, identity, diag
 
 # MATRIX MULTIPLICATION ________________________________________________________________________________________________
 
@@ -250,5 +250,18 @@ def cholesky(A):
 
     return S
 
+# decomposicao LD
+def LD(A):
+    if A.shape[0] != A.shape[1]:
+        raise Exception("MatrixShapeError in function LU")
 
+    L = identity(A.shape[0], dtype=float)
+    D = zeros(A.shape)
 
+    for c in xrange(A.shape[1]):
+        D[c, c] = A[c, c] - (L[c, :c] * L[c, :c] * diag(D)[:c]).sum()
+
+        for l in xrange(A.shape[0]):
+            L[l, c] = (A[l, c] - (L[l, :c] * L[c, :c] * diag(D)[:c]).sum()) / D[c, c]
+
+    return L, D
