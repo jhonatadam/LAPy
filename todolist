@@ -1,16 +1,19 @@
-* produto escalar - okS
+* produto escalar - ok
 * combinação de colunas (produto de vetor por matriz) - ok
 * multiplicação em blocos de matriz - ok
 * pivotação parcial - ok
 * pivotação total - ok
 * implementar pivotação de gauss - ok
-* implementar gauss-jordan
-* escalonamento para descobrir o posto
+* implementar gauss-jordan - ok
+* escalonamento para descobrir o posto - ok
+* descobrir inversa - ok
 * resolver sistema linear - ok
-* decomposição LU
+* decomposição LU - ok
 * descomposição cholesky
 * descomposição LDL^T
+
 * minimos quadrados (caso geral)
 * obter auto-valores e auto-vetor
+
 
 

@@ -2,16 +2,15 @@ import lapy
 import sys
 
 
-A = 1. * lapy.random.randint(5, size=(3, 5))
-b = 1. * lapy.random.randint(10, size=(3, 1))
+A = 1. * lapy.random.randint(10, size=(4, 4))
+B = 1. * lapy.random.randint(5, size=(4, 1))
 
-A[1, :] = A[0, :]
-print A
+# print lapy.mult(A, B)[0,0]
 
-A, b = lapy.gauss(A, b)
+L, U = lapy.LU(A)
 
+print L
+print U
+print lapy.mult(L, U)
 
-print A
-print b
-
-# implementar inversa da matriz
+# print lapy.mult(A, lapy.inv(A))

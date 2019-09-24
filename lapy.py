@@ -1,4 +1,4 @@
-from numpy import matrix, zeros, random, finfo, argmax, array
+from numpy import matrix, zeros, random, finfo, argmax, array, identity
 
 # MATRIX MULTIPLICATION ________________________________________________________________________________________________
 
@@ -73,7 +73,10 @@ def partial_pivoting(M, N, i, row_order):
     # trocando as linhas se existe um elemento maior
     if max_idx != i:
         M[[i, max_idx], :] = M[[max_idx, i], :]
-        N[[i, max_idx], :] = N[[max_idx, i], :]
+
+        if N != None:
+            N[[i, max_idx], :] = N[[max_idx, i], :]
+
         if row_order != None:
             row_order[[i, max_idx]] = row_order[[max_idx, i]]
 
@@ -92,7 +95,9 @@ def total_pivoting(M, N, i, col_order=None):
     # troca linhas se forem diferentes
     if max_idx[0] != i:
         M[[i, max_idx[0]], :] = M[[max_idx[0], i], :]
-        N[[i, max_idx[0]], :] = N[[max_idx[0], i], :]
+
+        if N != None:
+            N[[i, max_idx[0]], :] = N[[max_idx[0], i], :]
 
     # troca colunas da matriz M
     if max_idx[1] != i:
@@ -135,8 +140,50 @@ def gauss(A, B = None, row_order=None, col_order=None):
                 if B != None:
                     for k in xrange(D.shape[1]):
                         D[l, k] -= alpha * D[c, k]
+        else:
+            break
 
     return (C, D) if B != None else C
+
+# usado apenas para obtencao da inversa
+def jordan(A, B):
+
+    C = A.copy()
+    # inicialmente copia de B, se B existir
+    D = B.copy()
+
+    for c in reversed(range(A.shape[0])):
+
+        D[c, :] /= C[c, c]
+        C[c, c:] /= C[c, c]
+
+        for l in xrange(c):
+            D[l, :] -= C[l, c] * D[c, :]
+            C[l, c:] -= C[l, c] * C[c, c:]
+
+    return C, D
+
+# MATRIX ATTRIBUTE _____________________________________________________________________________________________________
+
+# rank
+def rank(A):
+    B = gauss(A)
+    for i in xrange(min(A.shape[0], A.shape[1])):
+        if not (abs(B[i, i]) > finfo(float).eps):
+            return i
+    return min(A.shape[0], A.shape[1])
+
+# inv
+def inv(A):
+    if A.shape[0] != A.shape[1]:
+        raise Exception("MatrixShapeError in function inv")
+
+    C = identity(A.shape[0], dtype=float)
+
+    B, C = gauss(A, C)
+    B, C = jordan(B, C)
+
+    return C
 
 
 # LINEAR SISTEM SOLVER _________________________________________________________________________________________________
@@ -166,4 +213,32 @@ def solve_ls(A, b):
     for i in xrange(n):
         index = var_idex.index(i)
         print "var_" + str(var_idex[index]) + " = " + str(var_val[index, 0])
+
+
+# MATRIX DECOMPOSITION _________________________________________________________________________________________________
+
+# decomposicao LU
+def LU(A):
+    if A.shape[0] != A.shape[1]:
+        raise Exception("MatrixShapeError in function LU")
+
+    L = identity(A.shape[0], dtype=float)
+    U = zeros(A.shape)
+
+    for c in xrange(A.shape[1]):
+        for l in xrange(A.shape[0]):
+            sum = (L[l, :min(l, c)] * U[:min(l, c), c]).sum()
+            if l > c:
+                L[l, c] = (A[l, c] - sum) / U[c, c]
+            else:
+                U[l, c] = A[l, c] - sum
+
+    return L, U
+
+
+# decomposicao cholesky (apenas para matrizes simetricas)
+def cholesky(A):
+    pass
+
+
 
