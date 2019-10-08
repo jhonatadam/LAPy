@@ -9,11 +9,16 @@
 * descobrir inversa - ok
 * resolver sistema linear - ok
 * decomposição LU - ok
-* descomposição cholesky
-* descomposição LDL^T
-
-* minimos quadrados (caso geral)
-* obter auto-valores e auto-vetor
+* descomposição cholesky - ok
+* descomposição LDL^T - ok
+* minimos quadrados (caso geral) - ok
+* auto-valores e auto-vetores para matrizes 2x2 - ok
+* método da potência regular - ok
+* método da potência inverso - ok
+* método da potência deslocada
+* método de householder
+* método QR
+* auto-valores e auto-vetores com householder e QR
 
 
 

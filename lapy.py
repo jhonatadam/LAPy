@@ -1,4 +1,8 @@
-from numpy import matrix, zeros, random, finfo, argmax, array, identity, diag
+from numpy import matrix, zeros, random, finfo, argmax, array, identity, diag, roots, linalg, float32
+
+
+def sortSecond(val):
+    return val[1]
 
 # MATRIX MULTIPLICATION ________________________________________________________________________________________________
 
@@ -112,7 +116,7 @@ def total_pivoting(M, N, i, col_order=None):
 # eliminacao de gauss
 def gauss(A, B = None, row_order=None, col_order=None):
 
-    if B != None:
+    if B.any() != None:
         if A.shape[0] != B.shape[0]:
             raise Exception("MatrixShapeError in function gauss")
 
@@ -123,7 +127,7 @@ def gauss(A, B = None, row_order=None, col_order=None):
     # inicialmente copia de A
     C = A.copy()
     # inicialmente copia de B, se B existir
-    D = B.copy() if B != None else None
+    D = B.copy() if B.any() != None else None
 
     for c in xrange(min(n - 1, m)):
         partial_pivoting(C, D, c, row_order)
@@ -137,13 +141,13 @@ def gauss(A, B = None, row_order=None, col_order=None):
                 for k in xrange((c+1), m):
                     C[l, k] -= alpha * C[c, k]
 
-                if B != None:
+                if B.any() != None:
                     for k in xrange(D.shape[1]):
                         D[l, k] -= alpha * D[c, k]
         else:
             break
 
-    return (C, D) if B != None else C
+    return (C, D) if B.any() != None else C
 
 # usado apenas para obtencao da inversa
 def jordan(A, B):
@@ -203,17 +207,23 @@ def solve_ls(A, b):
     # replacement
     for l in reversed(range(n)):
         var_sum = 0.
-        for c in range(l+1, n):
-            var_sum += C[l, c] * var_val[c, 0]
-        var_val[l, 0] = (d[l] - var_sum) / C[l, l]
+        if abs(C[l, l]) > finfo(float32).eps:
+            for c in range(l+1, n):
+                var_sum += C[l, c] * var_val[c, 0]
+            var_val[l, 0] = (d[l] - var_sum) / C[l, l]
+        else:
+            var_val[l, 0] = 1.
 
-    print mult(A, var_val)
-
+    sortlist = []
     var_idex = col_order.tolist()
     for i in xrange(n):
         index = var_idex.index(i)
-        print "var_" + str(var_idex[index]) + " = " + str(var_val[index, 0])
+        # print "var_" + str(var_idex[index]) + " = " + str(var_val[index, 0])
+        sortlist.append((var_val[index, 0], var_idex[index]))
 
+    sortlist.sort(key= sortSecond)
+
+    return matrix([val[0] for val in sortlist]).transpose()
 
 # MATRIX DECOMPOSITION _________________________________________________________________________________________________
 
@@ -265,3 +275,76 @@ def LD(A):
             L[l, c] = (A[l, c] - (L[l, :c] * L[c, :c] * diag(D)[:c]).sum()) / D[c, c]
 
     return L, D
+
+# LEAST SQUARES ________________________________________________________________________________________________________
+
+def least_squares(samples, degree):
+
+    A = zeros((len(samples), degree + 1))
+    b = zeros((len(samples), 1))
+
+    for s in xrange(len(samples)):
+        b[s] = samples[s][1]
+        for d in xrange(degree + 1):
+            A[s, d] = pow(samples[s][0], degree - d)
+
+    print A
+    print b
+
+    print solve_ls(mult(A.transpose(), A), mult(A.transpose(), b))
+
+# EIGENVALUES AND EIGENVECTORS _________________________________________________________________________________________
+
+# autovalores de matrizes 2X2
+def eigenvalues(A):
+    if A.shape != (2,2):
+        raise Exception("MatrixShapeError in function eigenvalues")
+
+    a = 1.
+    b = -A[0, 0] - A[1, 1]
+    c  = (A[0, 0] * A[1, 1]) - (A[0, 1] * A[1, 0])
+
+    return roots([a, b, c])
+
+
+def eigen(A):
+    eigval = eigenvalues(A)
+    b = zeros((2, 1))
+    eigpairlist = []
+
+    for i in range(2):
+        B = A.copy()
+        B[0, 0] -= eigval[i]
+        B[1, 1] -= eigval[i]
+        # print linalg.solve(B, b)
+        eigpairlist.append((eigval[i], solve_ls(B, b)))
+
+    return eigpairlist
+
+# metodo da potencia
+def power_method(A, x, epsilon):
+    eigvec = x / linalg.norm(x, ord=2)
+    x = mult(A, eigvec)
+    oldeigval = None
+    eigval = prod(eigvec, x)
+
+    while True:
+        eigvec = x / linalg.norm(x, ord=2)
+        x = mult(A, eigvec)
+        oldeigval = eigval
+        eigval = prod(eigvec, x)
+
+        if abs(oldeigval - eigval) < epsilon:
+            break
+    print " "
+    return eigval, eigvec/eigvec[1]
+
+def inv_power_method(A, x, epsilon):
+    eigval, eigvec = power_method(inv(A), x, epsilon)
+    return (1. / eigval), eigvec
+
+def des_power_method(A, x, eps, mi):
+    B = A - (identity(A.shape[0]) * mi)
+    print B
+    eigval, eigvec = inv_power_method(B, x, eps)
+    return (eigval + mi), eigvec
